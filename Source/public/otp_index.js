@@ -1,67 +1,21 @@
-let audioIN = { audio: true };
-//  audio is true, for recording
+navigator.mediaDevices.getUserMedia({ audio: true })
+  .then(stream => {
+    const mediaRecorder = new MediaRecorder(stream);
+    mediaRecorder.start();
 
-// Access the permission for use
-// the microphone
-navigator.mediaDevices.getUserMedia(audioIN)
-
-  // 'then()' method returns a Promise
-  .then(function (mediaStreamObj) {
-
-    // Start record
-    let record_button = document.getElementById('btnStart');
-
-    // This is the main thing to recorded
-    // the audio 'MediaRecorder' API
-    let mediaRecorder = new MediaRecorder(mediaStreamObj);
-    // Pass the audio stream
-
-    // Start event
-    record_button.addEventListener('mousedown', function (ev) {
-      mediaRecorder.start();
-      record_button.value = "Recording";
-      // console.log(mediaRecorder.state);
-    })
-
-    // Stop event
-    record_button.addEventListener('mouseup', function (ev) {
-      mediaRecorder.stop();
-      record_button.value = "Record";
-      // console.log(mediaRecorder.state);
+    const audioChunks = [];
+    mediaRecorder.addEventListener("dataavailable", event => {
+      audioChunks.push(event.data);
     });
 
-    // If audio data available then push
-    // it to the chunk array
-    mediaRecorder.ondataavailable = function (ev) {
-      dataArray.push(ev.data);
-    }
-
-    // Chunk array to store the audio data
-    let dataArray = [];
-
-    // Convert the audio data in to blob
-    // after stopping the recording
-    mediaRecorder.onstop = function (ev) {
-
-      // blob of type mp3
-      let audioData = new Blob(dataArray,
-                { 'type': 'audio/mp3;' });
-       
-      // After fill up the chunk
-      // array make it empty
-      dataArray = [];
-
-      // Creating audio url with reference
-      // of created blob named 'audioData'
-      let audioSrc = window.URL
-          .createObjectURL(audioData);
-
-      const audio = new Audio(audioSrc);
+    mediaRecorder.addEventListener("stop", () => {
+      const audioBlob = new Blob(audioChunks);
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
       audio.play();
-    }
-  })
+    });
 
-  // If any error occurs then handles the error
-  .catch(function (err) {
-    console.log(err.name, err.message);
+    setTimeout(() => {
+      mediaRecorder.stop();
+    }, 3000);
   });
